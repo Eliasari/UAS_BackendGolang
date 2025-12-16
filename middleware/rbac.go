@@ -10,16 +10,22 @@ func RBAC(requiredPermission string, permService *service.PermissionService) fib
 	return func(c *fiber.Ctx) error {
 
 		roleIDRaw := c.Locals("role_id")
+
 		if roleIDRaw == nil {
 			return c.Status(401).JSON(fiber.Map{
 				"error": "role_id missing",
 			})
 		}
+		var roleID string
 
-		roleID, ok := roleIDRaw.(string)
-		if !ok {
+		switch v := roleIDRaw.(type) {
+		case string:
+			roleID = v
+		case []byte:
+			roleID = string(v)
+		default:
 			return c.Status(401).JSON(fiber.Map{
-				"error": "invalid role_id",
+				"error": "invalid role_id type",
 			})
 		}
 
@@ -33,6 +39,7 @@ func RBAC(requiredPermission string, permService *service.PermissionService) fib
 		if !has {
 			return c.Status(403).JSON(fiber.Map{
 				"error": "forbidden",
+				"required_permission": "You do not have permission to perform this action: " + requiredPermission,
 			})
 		}
 

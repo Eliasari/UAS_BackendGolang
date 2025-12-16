@@ -10,3 +10,16 @@ type User struct {
 	RoleName  string `json:"role_name,omitempty"`
 	IsActive  bool   `json:"is_active"`
 }
+
+type CreateUserRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	FullName string `json:"full_name"`
+	RoleID   string `json:"role_id"`
+}
+
+type UpdateRoleRequest struct {
+	RoleID string `json:"role_id"`
+}
+

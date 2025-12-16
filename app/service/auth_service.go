@@ -17,6 +17,20 @@ func NewAuthService(repo *repository.AuthRepository) *AuthService {
 	return &AuthService{Repo: repo}
 }
 
+// Login godoc
+// @Summary Login user
+// @Description Login menggunakan username/email dan password, menghasilkan JWT
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body model.LoginRequest true "Login payload"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/auth/login [post]
 func (s *AuthService) Login(c *fiber.Ctx) error {
 	var req model.LoginRequest
 
@@ -76,6 +90,18 @@ func (s *AuthService) Login(c *fiber.Ctx) error {
 	})
 }
 
+// RefreshToken godoc
+// @Summary Refresh access token
+// @Description Generate token baru dari refresh token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body object true "Refresh token payload"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/v1/auth/refresh [post]
 func (s *AuthService) RefreshToken(c *fiber.Ctx) error {
 	var body struct {
 		RefreshToken string `json:"refreshToken"`
@@ -111,6 +137,14 @@ func (s *AuthService) RefreshToken(c *fiber.Ctx) error {
 	})
 }
 
+// Logout godoc
+// @Summary Logout user
+// @Description Logout user (client-side token invalidation)
+// @Tags Auth
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/auth/logout [post]
 func (s *AuthService) Logout(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{
 		"status": "success",
@@ -118,8 +152,21 @@ func (s *AuthService) Logout(c *fiber.Ctx) error {
 	})
 }
 
+// Profile godoc
+// @Summary Get user profile
+// @Description Ambil data user berdasarkan token JWT
+// @Tags Auth
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/v1/auth/profile [get]
 func (s *AuthService) Profile(c *fiber.Ctx) error {
-	userID := c.Locals("user_id").(string)
+	userID, ok := c.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
+	}
 
 	user, err := s.Repo.FindByID(userID)
 	if err != nil {

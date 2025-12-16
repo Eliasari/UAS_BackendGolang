@@ -11,6 +11,10 @@ func RegisterRoutes(
 	authService *service.AuthService,
 	userService *service.UserService,
 	permService *service.PermissionService,
+	achievementService *service.AchievementService,
+	reportService *service.ReportService,
+	lecturerService *service.StudentService,
+	studentService *service.StudentService,
 ) {
 
 	// auth
@@ -20,11 +24,14 @@ func RegisterRoutes(
 	UserRoutes(app, userService, permService)
 
 	// nanti achievement
-	// AchievementRoutes(app, achievementService, permService)
+	AchievementRoutes(app, achievementService, permService)
 
 	// nanti students
-	// StudentRoutes(app, studentService, permService)
+	StudentLecturerRoutes(app, studentService, permService)
 
 	// nanti lecturers
-	// LecturerRoutes(app, lecturerService, permService)
+	StudentLecturerRoutes(app, lecturerService, permService)
+
+	// reports
+	ReportRoutes(app, reportService, permService)
 }
