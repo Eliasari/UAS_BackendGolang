@@ -214,3 +214,6 @@ ADD CONSTRAINT achievement_references_status_check
 CHECK (status IN ('draft', 'submitted', 'verified', 'rejected', 'deleted'));
 
 select * from users;
+select * from students;
+select * from lecturers;
+select * from achievement_references;

@@ -48,48 +48,43 @@ func NewAchievementService(mongoRepo *repository.AchievementMongoRepository,
 // @Accept json
 // @Produce json
 // @Param request body model.CreateAchievementRequest true "Create draft payload"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 403 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.CreateDraftResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/achievements [post]
 func (s *AchievementService) CreateDraft(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
-
 	var req model.CreateAchievementRequest
+
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid request"})
 	}
 
-	// 1️⃣ Ambil student_id dari users
-	var studentID string
-	err := s.StudentDB.QueryRow(
-		"SELECT id FROM students WHERE user_id = $1",
-		userID,
-	).Scan(&studentID)
-
+	studentID, err := s.RefRepo.GetStudentIDByUser(userID)
 	if err != nil {
 		return c.Status(403).JSON(fiber.Map{"error": "user is not a student"})
 	}
 
-	// 2️⃣ Insert ke Mongo
 	achievement := &model.Achievement{
 		StudentID:       studentID,
 		AchievementType: req.AchievementType,
 		Title:           req.Title,
 		Description:     req.Description,
 		Details:         req.Details,
-		Tags:            req.Tags,
 		Points:          req.Points,
+		Tags:            req.Tags,
+		Attachments:     []model.Attachment{},
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 
 	mongoID, err := s.MongoRepo.InsertDraft(achievement)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "failed to insert mongo"})
+		return c.Status(500).JSON(fiber.Map{"error": "failed to insert draft"})
 	}
 
-	// 3️⃣ Insert ke PostgreSQL reference
 	ref := &model.AchievementReference{
 		StudentID:          studentID,
 		MongoAchievementID: mongoID,
@@ -100,7 +95,7 @@ func (s *AchievementService) CreateDraft(c *fiber.Ctx) error {
 
 	if err := s.RefRepo.InsertDraft(ref); err != nil {
 		_ = s.MongoRepo.DeleteByID(mongoID)
-		return c.Status(500).JSON(fiber.Map{"error": "failed to insert reference"})
+		return c.Status(500).JSON(fiber.Map{"error": "failed to save reference"})
 	}
 
 	return c.JSON(fiber.Map{
@@ -110,7 +105,6 @@ func (s *AchievementService) CreateDraft(c *fiber.Ctx) error {
 			"status":   "draft",
 		},
 	})
-
 }
 
 // Submit godoc
@@ -119,22 +113,17 @@ func (s *AchievementService) CreateDraft(c *fiber.Ctx) error {
 // @Tags Achievement
 // @Produce json
 // @Param id path string true "Achievement ID"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 403 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.SubmitAchievementResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/achievements/{id}/submit [post]
 func (s *AchievementService) Submit(c *fiber.Ctx) error {
 	achievementID := c.Params("id")
 	userID := c.Locals("user_id").(string)
 
-	var studentID string
-	err := s.StudentDB.QueryRow(
-		"SELECT id FROM students WHERE user_id = $1",
-		userID,
-	).Scan(&studentID)
-
+	studentID, err := s.RefRepo.GetStudentIDByUser(userID)
 	if err != nil {
 		return c.Status(403).JSON(fiber.Map{
 			"error": "user is not a student",
@@ -147,7 +136,6 @@ func (s *AchievementService) Submit(c *fiber.Ctx) error {
 			"error": "achievement not found or not in draft status",
 		})
 	}
-
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": "failed to submit achievement",
@@ -170,10 +158,9 @@ func (s *AchievementService) Submit(c *fiber.Ctx) error {
 // @Tags Achievement
 // @Produce json
 // @Param id path string true "Achievement ID"
-// @Success 200 {object} map[string]interface{}
-// @Failure 403 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.AchievementStatusResponse
+// @Failure 404 {object} map[string]string "Prestasi tidak ditemukan atau bukan bimbingan dosen"
+// @Failure 500 {object} map[string]string "Gagal memverifikasi prestasi"
 // @Security BearerAuth
 // @Router /api/v1/achievements/{id}/verify [post]
 func (s *AchievementService) Verify(c *fiber.Ctx) error {
@@ -221,11 +208,11 @@ func (s *AchievementService) Verify(c *fiber.Ctx) error {
 // @Produce json
 // @Param id path string true "Achievement ID"
 // @Param request body model.RejectionNote true "Rejection note"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 403 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.AchievementStatusResponse
+// @Failure 400 {object} model.MessageResponse
+// @Failure 403 {object} model.MessageResponse
+// @Failure 404 {object} model.MessageResponse
+// @Failure 500 {object} model.MessageResponse
 // @Security BearerAuth
 // @Router /api/v1/achievements/{id}/reject [post]
 func (s *AchievementService) Reject(c *fiber.Ctx) error {
@@ -279,7 +266,7 @@ func (s *AchievementService) Reject(c *fiber.Ctx) error {
 
 // List godoc
 // @Summary List achievements
-// @Description Menampilkan daftar prestasi sesuai role dan permission (Admin, Dosen, Mahasiswa)
+// @Description Menampilkan daftar prestasi sesuai role dan permission (Admin, Dosen Wali, Mahasiswa)
 // @Tags Achievement
 // @Produce json
 //
@@ -287,11 +274,11 @@ func (s *AchievementService) Reject(c *fiber.Ctx) error {
 // @Param limit query int false "Jumlah data per halaman" default(10)
 // @Param sort query string false "Field sorting (created_at, status)" default(created_at)
 // @Param order query string false "Urutan sorting (asc | desc)" default(desc)
-// @Param status query string false "Filter status prestasi (pending, approved, rejected)"
+// @Param status query string false "Filter status prestasi (draft, submitted, verified, rejected)"
 //
-// @Success 200 {object} map[string]interface{} "List achievements dengan pagination"
-// @Failure 403 {object} map[string]string "Forbidden"
-// @Failure 500 {object} map[string]string "Internal server error"
+// @Success 200 {object} map[string]interface{} "List achievements dengan pagination dan meta"
+// @Failure 403 {object} map[string]string "Tidak memiliki izin mengakses resource"
+// @Failure 500 {object} map[string]string "Terjadi kesalahan server"
 //
 // @Security BearerAuth
 // @Router /api/v1/achievements [get]
@@ -390,9 +377,9 @@ func (s *AchievementService) List(c *fiber.Ctx) error {
 // @Tags Achievement
 // @Produce json
 // @Param id path string true "Achievement ID"
-// @Success 200 {object} map[string]interface{}
-// @Failure 403 {object} map[string]string
-// @Failure 404 {object} map[string]string
+// @Success 200 {object} model.AchievementDetailResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/achievements/{id} [get]
 func (s *AchievementService) Detail(c *fiber.Ctx) error {
@@ -406,8 +393,7 @@ func (s *AchievementService) Detail(c *fiber.Ctx) error {
 			"message": "Achievement tidak ditemukan",
 		})
 	}
-
-	// 2️⃣ Coba sebagai mahasiswa (owner)
+	
 	if studentID, err := s.RefRepo.GetStudentIDByUser(userID); err == nil {
 		if studentID != ref.StudentID {
 			// bukan owner → cek advisor
@@ -418,12 +404,8 @@ func (s *AchievementService) Detail(c *fiber.Ctx) error {
 				})
 			}
 		}
-		// owner atau advisor → lanjut
 	}
 
-	// kalau bukan mahasiswa → admin/dosen non wali → lolos karena RBAC
-
-	// 3️⃣ Ambil detail mongo
 	mongoData, err := s.MongoRepo.FindByID(ref.MongoAchievementID)
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -450,10 +432,10 @@ func (s *AchievementService) Detail(c *fiber.Ctx) error {
 // @Produce json
 // @Param id path string true "Achievement ID"
 // @Param request body model.UpdateAchievementRequest true "Update payload"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 403 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.UpdateAchievementResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/achievements/{id} [put]
 func (s *AchievementService) Update(c *fiber.Ctx) error {
@@ -504,10 +486,10 @@ func (s *AchievementService) Update(c *fiber.Ctx) error {
 // @Tags Achievement
 // @Produce json
 // @Param id path string true "Achievement ID"
-// @Success 200 {object} map[string]interface{}
-// @Failure 403 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 409 {object} map[string]string
+// @Success 200 {object} model.DeleteAchievementResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 409 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/achievements/{id} [delete]
 func (s *AchievementService) Delete(c *fiber.Ctx) error {
@@ -557,10 +539,10 @@ func (s *AchievementService) Delete(c *fiber.Ctx) error {
 // @Produce json
 // @Param id path string true "Achievement ID"
 // @Param file formData file true "Attachment file"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 403 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.UploadAttachmentResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/achievements/{id}/attachments [post]
 func (s *AchievementService) UploadAttachment(c *fiber.Ctx) error {
@@ -641,10 +623,10 @@ func (s *AchievementService) UploadAttachment(c *fiber.Ctx) error {
 // @Tags Achievement
 // @Produce json
 // @Param id path string true "Achievement ID"
-// @Success 200 {object} map[string]interface{}
-// @Failure 403 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.AchievementHistoryResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/achievements/{id}/history [get]
 func (s *AchievementService) History(c *fiber.Ctx) error {

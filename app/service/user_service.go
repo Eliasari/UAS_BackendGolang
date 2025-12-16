@@ -20,9 +20,9 @@ func NewUserService(repo *repository.UserRepository) *UserService {
 // @Description Mengambil seluruh data user
 // @Tags Users
 // @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.GetUserResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/users [get]
 func (s *UserService) GetAll(c *fiber.Ctx) error {
@@ -51,8 +51,8 @@ func (s *UserService) GetAll(c *fiber.Ctx) error {
 // @Tags Users
 // @Produce json
 // @Param id path string true "User ID"
-// @Success 200 {object} map[string]interface{}
-// @Failure 404 {object} map[string]string
+// @Success 200 {object} model.GetUserResponse
+// @Failure 404 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/users/{id} [get]
 func (s *UserService) GetByID(c *fiber.Ctx) error {
@@ -71,22 +71,36 @@ func (s *UserService) GetByID(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param request body model.CreateUserRequest true "Data user"
-// @Success 201 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 201 {object} model.CreateUserResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/users [post]
 func (s *UserService) Create(c *fiber.Ctx) error {
-	var u model.User
-	if err := c.BodyParser(&u); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid request"})
+	var req model.CreateUserRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(model.ErrorResponse{
+			Error: "invalid request",
+		})
 	}
 
-	if err := s.Repo.Create(&u); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	user := model.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: req.Password,
+		FullName: req.FullName,
+		RoleID:   req.RoleID,
 	}
 
-	return c.Status(201).JSON(fiber.Map{"data": u})
+	if err := s.Repo.Create(&user); err != nil {
+		return c.Status(500).JSON(model.ErrorResponse{
+			Error: err.Error(),
+		})
+	}
+
+	return c.Status(201).JSON(model.CreateUserResponse{
+		Data: user,
+	})
 }
 
 // Update godoc
@@ -96,39 +110,47 @@ func (s *UserService) Create(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "User ID"
-// @Param request body model.User true "Data user"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Param request body model.UpdateUserRequest true "Data user"
+// @Success 200 {object} model.UpdateUserResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/users/{id} [put]
 func (s *UserService) Update(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	var req model.User
+	var req model.UpdateUserRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "invalid request",
+		return c.Status(400).JSON(model.ErrorResponse{
+			Error: "invalid request",
 		})
 	}
 
-	if err := s.Repo.Update(id, &req); err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"error": "failed to update user",
+	user := model.User{
+		Username: req.Username,
+		Email:    req.Email,
+		FullName: req.FullName,
+		RoleID:   req.RoleID,
+		IsActive: req.IsActive,
+	}
+
+	if err := s.Repo.Update(id, &user); err != nil {
+		return c.Status(500).JSON(model.ErrorResponse{
+			Error: "failed to update user",
 		})
 	}
 
 	updatedUser, err := s.Repo.GetByID(id)
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "user not found",
+		return c.Status(404).JSON(model.ErrorResponse{
+			Error: "user not found",
 		})
 	}
 
-	return c.Status(200).JSON(fiber.Map{
-		"status": "success updated",
-		"data":   updatedUser,
+	return c.Status(200).JSON(model.UpdateUserResponse{
+		Status: "success",
+		Data:   *updatedUser,
 	})
 }
 
@@ -138,8 +160,8 @@ func (s *UserService) Update(c *fiber.Ctx) error {
 // @Tags Users
 // @Produce json
 // @Param id path string true "User ID"
-// @Success 200 {object} map[string]interface{}
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.MessageResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/users/{id} [delete]
 func (s *UserService) Delete(c *fiber.Ctx) error {
@@ -158,11 +180,11 @@ func (s *UserService) Delete(c *fiber.Ctx) error {
 // @Produce json
 // @Param id path string true "User ID"
 // @Param request body model.UpdateRoleRequest true "Role payload"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 422 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.UpdateRoleResult
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 422 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/users/{id}/role [put]
 func (s *UserService) UpdateRole(c *fiber.Ctx) error {

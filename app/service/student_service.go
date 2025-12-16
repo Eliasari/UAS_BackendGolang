@@ -20,8 +20,8 @@ func NewStudentService(sr *repository.StudentRepository, lr *repository.Lecturer
 // @Description Menampilkan daftar seluruh mahasiswa
 // @Tags Student
 // @Produce json
-// @Success 200 {array} map[string]interface{}
-// @Failure 500 {object} map[string]string
+// @Success 200 {array} model.Student
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/students [get]
 func (s *StudentService) GetStudents(c *fiber.Ctx) error {
@@ -38,8 +38,8 @@ func (s *StudentService) GetStudents(c *fiber.Ctx) error {
 // @Tags Student
 // @Produce json
 // @Param id path string true "Student ID"
-// @Success 200 {object} map[string]interface{}
-// @Failure 404 {object} map[string]string
+// @Success 200 {object} model.Student
+// @Failure 404 {object} model.MessageResponse
 // @Security BearerAuth
 // @Router /api/v1/students/{id} [get]
 func (s *StudentService) GetStudent(c *fiber.Ctx) error {
@@ -58,8 +58,8 @@ func (s *StudentService) GetStudent(c *fiber.Ctx) error {
 // @Tags Student
 // @Produce json
 // @Param id path string true "Student ID"
-// @Success 200 {array} map[string]interface{}
-// @Failure 500 {object} map[string]string
+// @Success 200 {array} model.StudentAchievementResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/students/{id}/achievements [get]
 func (s *StudentService) GetStudentAchievements(c *fiber.Ctx) error {
@@ -81,9 +81,9 @@ func (s *StudentService) GetStudentAchievements(c *fiber.Ctx) error {
 // @Produce json
 // @Param id path string true "Student ID"
 // @Param request body model.UpdateAdvisorRequest true "Advisor payload"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.AssignAdvisorResponse
+// @Failure 400 {object} model.MessageResponse
+// @Failure 500 {object} model.MessageResponse
 // @Security BearerAuth
 // @Router /api/v1/students/{id}/advisor [put]
 func (s *StudentService) AssignAdvisor(c *fiber.Ctx) error {
@@ -109,8 +109,8 @@ func (s *StudentService) AssignAdvisor(c *fiber.Ctx) error {
 // @Description Menampilkan daftar dosen
 // @Tags Lecturer
 // @Produce json
-// @Success 200 {array} map[string]interface{}
-// @Failure 500 {object} map[string]string
+// @Success 200 {array} model.AdviseeResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/lecturers [get]
 func (s *StudentService) GetLecturers(c *fiber.Ctx) error {
@@ -127,8 +127,8 @@ func (s *StudentService) GetLecturers(c *fiber.Ctx) error {
 // @Tags Lecturer
 // @Produce json
 // @Param id path string true "Lecturer ID"
-// @Success 200 {array} map[string]interface{}
-// @Failure 500 {object} map[string]string
+// @Success 200 {array} model.AdviseeResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/lecturers/{id}/advisees [get]
 func (s *StudentService) GetAdvisees(c *fiber.Ctx) error {

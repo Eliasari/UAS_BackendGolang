@@ -1,5 +1,70 @@
 basePath: /
 definitions:
+  model.AchievementDetailResponse:
+    properties:
+      data:
+        properties:
+          achievement_detail: {}
+          created_at:
+            type: string
+          id:
+            type: string
+          status:
+            type: string
+        type: object
+      status:
+        type: string
+    type: object
+  model.AchievementHistoryResponse:
+    properties:
+      history:
+        items:
+          $ref: '#/definitions/model.HistoryItem'
+        type: array
+      status:
+        type: string
+    type: object
+  model.AchievementStatusResponse:
+    properties:
+      data:
+        properties:
+          id:
+            type: string
+          status:
+            type: string
+        type: object
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  model.AdviseeResponse:
+    properties:
+      advisor_id:
+        type: string
+      id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.AssignAdvisorResponse:
+    properties:
+      advisor_id:
+        type: string
+      message:
+        type: string
+    type: object
+  model.Attachment:
+    properties:
+      file_name:
+        type: string
+      file_type:
+        type: string
+      file_url:
+        type: string
+      uploaded_at:
+        type: string
+    type: object
   model.CreateAchievementRequest:
     properties:
       achievement_type:
@@ -19,6 +84,20 @@ definitions:
       title:
         type: string
     type: object
+  model.CreateDraftDataResult:
+    properties:
+      mongo_id:
+        type: string
+      status:
+        type: string
+    type: object
+  model.CreateDraftResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.CreateDraftDataResult'
+      status:
+        type: string
+    type: object
   model.CreateUserRequest:
     properties:
       email:
@@ -32,6 +111,50 @@ definitions:
       username:
         type: string
     type: object
+  model.CreateUserResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.User'
+      status:
+        type: string
+    type: object
+  model.DeleteAchievementResponse:
+    properties:
+      data:
+        properties:
+          id:
+            type: string
+        type: object
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  model.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  model.GetUserResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.User'
+        type: array
+      status:
+        type: string
+    type: object
+  model.HistoryItem:
+    properties:
+      note:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
   model.LoginRequest:
     properties:
       password:
@@ -41,6 +164,63 @@ definitions:
     required:
     - password
     - username
+    type: object
+  model.LoginResponse:
+    properties:
+      refreshToken:
+        type: string
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+    type: object
+  model.MessageResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  model.ProfileResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.ProfileResponseData'
+      status:
+        type: string
+    type: object
+  model.ProfileResponseData:
+    properties:
+      email:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: string
+      isActive:
+        type: boolean
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  model.RefreshTokenData:
+    properties:
+      refreshToken:
+        type: string
+      token:
+        type: string
+    type: object
+  model.RefreshTokenRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
+  model.RefreshTokenResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.RefreshTokenData'
+      status:
+        type: string
     type: object
   model.RejectionNote:
     properties:
@@ -84,6 +264,58 @@ definitions:
           $ref: '#/definitions/model.StatisticItem'
         type: array
     type: object
+  model.Student:
+    properties:
+      advisor_id:
+        type: string
+      id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.StudentAchievementReportResponse:
+    properties:
+      _id: {}
+      achievementType:
+        type: string
+      createdAt: {}
+      description:
+        type: string
+      details:
+        additionalProperties: true
+        type: object
+      points:
+        type: integer
+      studentId:
+        type: string
+      title:
+        type: string
+    type: object
+  model.StudentAchievementResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      status:
+        type: string
+    type: object
+  model.SubmitAchievementData:
+    properties:
+      id:
+        type: string
+      status:
+        type: string
+    type: object
+  model.SubmitAchievementResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.SubmitAchievementData'
+      message:
+        type: string
+      status:
+        type: string
+    type: object
   model.UpdateAchievementRequest:
     properties:
       description:
@@ -101,6 +333,20 @@ definitions:
       title:
         type: string
     type: object
+  model.UpdateAchievementResponse:
+    properties:
+      data:
+        properties:
+          id:
+            type: string
+          mongo_id:
+            type: string
+        type: object
+      message:
+        type: string
+      status:
+        type: string
+    type: object
   model.UpdateAdvisorRequest:
     properties:
       advisor_id:
@@ -109,6 +355,50 @@ definitions:
   model.UpdateRoleRequest:
     properties:
       role_id:
+        type: string
+    type: object
+  model.UpdateRoleResult:
+    properties:
+      id:
+        type: string
+      is_active:
+        type: boolean
+      role:
+        type: string
+      role_id:
+        type: string
+      username:
+        type: string
+    type: object
+  model.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      is_active:
+        type: boolean
+      role_id:
+        type: string
+      username:
+        type: string
+    type: object
+  model.UpdateUserResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.User'
+      status:
+        type: string
+    type: object
+  model.UploadAttachmentResponse:
+    properties:
+      file:
+        allOf:
+        - $ref: '#/definitions/model.Attachment'
+        description: pakai struct yang sama
+      message:
+        type: string
+      status:
         type: string
     type: object
   model.User:
@@ -138,7 +428,7 @@ paths:
   /api/v1/achievements:
     get:
       description: Menampilkan daftar prestasi sesuai role dan permission (Admin,
-        Dosen, Mahasiswa)
+        Dosen Wali, Mahasiswa)
       parameters:
       - default: 1
         description: Nomor halaman
@@ -160,7 +450,7 @@ paths:
         in: query
         name: order
         type: string
-      - description: Filter status prestasi (pending, approved, rejected)
+      - description: Filter status prestasi (draft, submitted, verified, rejected)
         in: query
         name: status
         type: string
@@ -168,18 +458,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: List achievements dengan pagination
+          description: List achievements dengan pagination dan meta
           schema:
             additionalProperties: true
             type: object
         "403":
-          description: Forbidden
+          description: Tidak memiliki izin mengakses resource
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: Internal server error
+          description: Terjadi kesalahan server
           schema:
             additionalProperties:
               type: string
@@ -206,26 +496,19 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.CreateDraftResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create achievement draft
@@ -246,26 +529,19 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.DeleteAchievementResponse'
         "403":
           description: Forbidden
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete achievement draft
@@ -285,20 +561,15 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.AchievementDetailResponse'
         "403":
           description: Forbidden
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Achievement detail
@@ -326,26 +597,19 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.UpdateAchievementResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update achievement draft
@@ -373,26 +637,19 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.UploadAttachmentResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Upload achievement attachment
@@ -413,26 +670,19 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.AchievementHistoryResponse'
         "403":
           description: Forbidden
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Achievement history
@@ -461,32 +711,23 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.AchievementStatusResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.MessageResponse'
         "403":
           description: Forbidden
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.MessageResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.MessageResponse'
       security:
       - BearerAuth: []
       summary: Reject achievement
@@ -507,26 +748,19 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.SubmitAchievementResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Submit achievement
@@ -547,22 +781,15 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
-        "403":
-          description: Forbidden
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.AchievementStatusResponse'
         "404":
-          description: Not Found
+          description: Prestasi tidak ditemukan atau bukan bimbingan dosen
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: Internal Server Error
+          description: Gagal memverifikasi prestasi
           schema:
             additionalProperties:
               type: string
@@ -590,38 +817,27 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.LoginResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       summary: Login user
       tags:
       - Auth
@@ -634,9 +850,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.MessageResponse'
       security:
       - BearerAuth: []
       summary: Logout user
@@ -651,20 +865,15 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.ProfileResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get user profile
@@ -681,33 +890,32 @@ paths:
         name: request
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/model.RefreshTokenRequest'
+      - description: Refresh token payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RefreshTokenRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.RefreshTokenResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       summary: Refresh access token
       tags:
       - Auth
@@ -721,15 +929,12 @@ paths:
           description: OK
           schema:
             items:
-              additionalProperties: true
-              type: object
+              $ref: '#/definitions/model.AdviseeResponse'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get all lecturers
@@ -751,15 +956,12 @@ paths:
           description: OK
           schema:
             items:
-              additionalProperties: true
-              type: object
+              $ref: '#/definitions/model.AdviseeResponse'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get advisees
@@ -774,6 +976,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.StatisticsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Achievement statistics report
@@ -792,9 +998,12 @@ paths:
           description: OK
           schema:
             items:
-              additionalProperties: true
-              type: object
+              $ref: '#/definitions/model.StudentAchievementReportResponse'
             type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Student achievement report
@@ -810,15 +1019,12 @@ paths:
           description: OK
           schema:
             items:
-              additionalProperties: true
-              type: object
+              $ref: '#/definitions/model.Student'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get all students
@@ -839,14 +1045,11 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.Student'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.MessageResponse'
       security:
       - BearerAuth: []
       summary: Get student detail
@@ -868,15 +1071,12 @@ paths:
           description: OK
           schema:
             items:
-              additionalProperties: true
-              type: object
+              $ref: '#/definitions/model.StudentAchievementResponse'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get student achievements
@@ -905,20 +1105,15 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.AssignAdvisorResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.MessageResponse'
       security:
       - BearerAuth: []
       summary: Assign academic advisor
@@ -933,20 +1128,15 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.GetUserResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Ambil semua user
@@ -969,20 +1159,15 @@ paths:
         "201":
           description: Created
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.CreateUserResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Tambah user baru
@@ -1003,14 +1188,11 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.MessageResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Hapus user
@@ -1030,14 +1212,11 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.GetUserResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Ambil user berdasarkan ID
@@ -1058,33 +1237,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/model.User'
+          $ref: '#/definitions/model.UpdateUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.UpdateUserResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update user
@@ -1113,32 +1285,23 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.UpdateRoleResult'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update role user

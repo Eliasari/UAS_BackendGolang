@@ -26,6 +26,7 @@ func NewReportService(repo *repository.ReportRepository) *ReportService {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} model.StatisticsResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Router /api/v1/reports/statistics [get]
 func (s *ReportService) Statistics(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
@@ -145,7 +146,8 @@ func (s *ReportService) Statistics(c *fiber.Ctx) error {
 // @Tags Report
 // @Security BearerAuth
 // @Param id path string true "Student ID"
-// @Success 200 {object} []map[string]interface{}
+// @Success 200 {array} model.StudentAchievementReportResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Router /api/v1/reports/student/{id} [get]
 func (s *ReportService) StudentReport(c *fiber.Ctx) error {
 	studentID := c.Params("id")

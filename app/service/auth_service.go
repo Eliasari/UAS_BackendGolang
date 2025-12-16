@@ -24,12 +24,12 @@ func NewAuthService(repo *repository.AuthRepository) *AuthService {
 // @Accept json
 // @Produce json
 // @Param request body model.LoginRequest true "Login payload"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 403 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} model.LoginResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 403 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Router /api/v1/auth/login [post]
 func (s *AuthService) Login(c *fiber.Ctx) error {
 	var req model.LoginRequest
@@ -96,11 +96,12 @@ func (s *AuthService) Login(c *fiber.Ctx) error {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param request body object true "Refresh token payload"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 404 {object} map[string]string
+// @Param request body model.RefreshTokenRequest true "Refresh token payload"
+// @Param request body model.RefreshTokenRequest true "Refresh token payload"
+// @Success 200 {object} model.RefreshTokenResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
 // @Router /api/v1/auth/refresh [post]
 func (s *AuthService) RefreshToken(c *fiber.Ctx) error {
 	var body struct {
@@ -142,7 +143,7 @@ func (s *AuthService) RefreshToken(c *fiber.Ctx) error {
 // @Description Logout user (client-side token invalidation)
 // @Tags Auth
 // @Produce json
-// @Success 200 {object} map[string]string
+// @Success 200 {object} model.MessageResponse
 // @Security BearerAuth
 // @Router /api/v1/auth/logout [post]
 func (s *AuthService) Logout(c *fiber.Ctx) error {
@@ -158,9 +159,9 @@ func (s *AuthService) Logout(c *fiber.Ctx) error {
 // @Tags Auth
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} map[string]interface{}
-// @Failure 401 {object} map[string]string
-// @Failure 404 {object} map[string]string
+// @Success 200 {object} model.ProfileResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
 // @Router /api/v1/auth/profile [get]
 func (s *AuthService) Profile(c *fiber.Ctx) error {
 	userID, ok := c.Locals("user_id").(string)
