@@ -137,12 +137,38 @@ info:
 paths:
   /api/v1/achievements:
     get:
-      description: Menampilkan daftar prestasi sesuai role dan permission
+      description: Menampilkan daftar prestasi sesuai role dan permission (Admin,
+        Dosen, Mahasiswa)
+      parameters:
+      - default: 1
+        description: Nomor halaman
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Jumlah data per halaman
+        in: query
+        name: limit
+        type: integer
+      - default: created_at
+        description: Field sorting (created_at, status)
+        in: query
+        name: sort
+        type: string
+      - default: desc
+        description: Urutan sorting (asc | desc)
+        in: query
+        name: order
+        type: string
+      - description: Filter status prestasi (pending, approved, rejected)
+        in: query
+        name: status
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: List achievements dengan pagination
           schema:
             additionalProperties: true
             type: object
@@ -153,7 +179,7 @@ paths:
               type: string
             type: object
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
             additionalProperties:
               type: string

@@ -3,15 +3,15 @@ package service
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"math"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 
 	"uas-prestasi/app/model"
 	"uas-prestasi/app/repository"
-
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -41,7 +41,7 @@ func NewAchievementService(mongoRepo *repository.AchievementMongoRepository,
 
 // CreateDraft godoc
 // @Summary Create achievement draft
-// @Description Create draft prestasi. 
+// @Description Create draft prestasi.
 // Details bersifat dinamis tergantung achievement_type.
 // Contoh competition: { competitionName, competitionLevel, rank, medalType }
 // @Tags Achievement
@@ -279,35 +279,75 @@ func (s *AchievementService) Reject(c *fiber.Ctx) error {
 
 // List godoc
 // @Summary List achievements
-// @Description Menampilkan daftar prestasi sesuai role dan permission
+// @Description Menampilkan daftar prestasi sesuai role dan permission (Admin, Dosen, Mahasiswa)
 // @Tags Achievement
 // @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Failure 403 {object} map[string]string
-// @Failure 500 {object} map[string]string
+//
+// @Param page query int false "Nomor halaman" default(1)
+// @Param limit query int false "Jumlah data per halaman" default(10)
+// @Param sort query string false "Field sorting (created_at, status)" default(created_at)
+// @Param order query string false "Urutan sorting (asc | desc)" default(desc)
+// @Param status query string false "Filter status prestasi (pending, approved, rejected)"
+//
+// @Success 200 {object} map[string]interface{} "List achievements dengan pagination"
+// @Failure 403 {object} map[string]string "Forbidden"
+// @Failure 500 {object} map[string]string "Internal server error"
+//
 // @Security BearerAuth
 // @Router /api/v1/achievements [get]
 func (s *AchievementService) List(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 	roleID := c.Locals("role_id").(string)
 
-	var refs []model.AchievementReference
-	var err error
+	// ===== Pagination =====
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "10"))
 
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+
+	// ===== Filter & Sorting =====
+	sortBy := c.Query("sort", "created_at")
+	order := c.Query("order", "desc")
+	status := c.Query("status", "")
+
+	var (
+		refs  []model.AchievementReference
+		total int
+		err   error
+	)
+
+	// ===== Role-based access =====
 	if ok, _ := s.PermissionService.HasPermission(roleID, "achievement:list:all"); ok {
-		refs, err = s.RefRepo.ListAll()
+
+		refs, total, err = s.RefRepo.ListAll(
+			limit, offset, sortBy, order, status,
+		)
 
 	} else if ok, _ := s.PermissionService.HasPermission(roleID, "achievement:list:advisor"); ok {
-		refs, err = s.RefRepo.ListByLecturer(userID)
+
+		refs, total, err = s.RefRepo.ListByLecturer(
+			userID, limit, offset, sortBy, order, status,
+		)
 
 	} else if ok, _ := s.PermissionService.HasPermission(roleID, "achievement:list:self"); ok {
+
 		studentID, err2 := s.RefRepo.GetStudentIDByUser(userID)
 		if err2 != nil {
 			return c.Status(403).JSON(fiber.Map{
 				"message": "Student data not found",
 			})
 		}
-		refs, err = s.RefRepo.ListByStudent(studentID)
+
+		refs, total, err = s.RefRepo.ListByStudent(
+			studentID, limit, offset, sortBy, order, status,
+		)
 
 	} else {
 		return c.Status(403).JSON(fiber.Map{
@@ -319,6 +359,7 @@ func (s *AchievementService) List(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	// ===== Build response data =====
 	var results []fiber.Map
 	for _, ref := range refs {
 		mongoData, _ := s.MongoRepo.FindByID(ref.MongoAchievementID)
@@ -333,7 +374,13 @@ func (s *AchievementService) List(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"status": "success",
-		"data":   results,
+		"meta": fiber.Map{
+			"page":        page,
+			"limit":       limit,
+			"total":       total,
+			"total_pages": int(math.Ceil(float64(total) / float64(limit))),
+		},
+		"data": results,
 	})
 }
 
@@ -413,7 +460,6 @@ func (s *AchievementService) Update(c *fiber.Ctx) error {
 	id := c.Params("id")
 	userID := c.Locals("user_id").(string)
 
-	// 1️⃣ Ambil studentID dari userID
 	studentID, err := s.RefRepo.GetStudentIDByUser(userID)
 	if err != nil {
 		return c.Status(403).JSON(fiber.Map{
@@ -421,35 +467,27 @@ func (s *AchievementService) Update(c *fiber.Ctx) error {
 		})
 	}
 
-	// 2️⃣ Parse payload
 	var payload map[string]interface{}
 	if err := c.BodyParser(&payload); err != nil {
-		log.Println("❌ BodyParser error:", err)
 		return c.Status(400).JSON(fiber.Map{
 			"message": "Payload invalid",
 		})
 	}
 
-	// 3️⃣ Ambil draft berdasarkan owner
 	ref, err := s.RefRepo.GetDraftByOwner(id, studentID)
 	if err != nil {
 		return c.Status(403).JSON(fiber.Map{
 			"message": "Draft tidak ditemukan atau bukan milik Anda",
 		})
 	}
-	log.Printf("Found draft: %+v\n", ref)
 
-	// 4️⃣ Update di MongoDB
 	err = s.MongoRepo.UpdateByID(ref.MongoAchievementID, payload)
 	if err != nil {
-		log.Println("❌ MongoRepo.UpdateByID error:", err)
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Gagal update data",
 		})
 	}
 
-	// 5️⃣ Success response
-	fmt.Println("✅ Draft berhasil diupdate")
 	return c.JSON(fiber.Map{
 		"status":  "success",
 		"message": "Draft berhasil diupdate",

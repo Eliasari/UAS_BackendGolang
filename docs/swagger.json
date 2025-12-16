@@ -19,7 +19,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Menampilkan daftar prestasi sesuai role dan permission",
+                "description": "Menampilkan daftar prestasi sesuai role dan permission (Admin, Dosen, Mahasiswa)",
                 "produces": [
                     "application/json"
                 ],
@@ -27,9 +27,45 @@
                     "Achievement"
                 ],
                 "summary": "List achievements",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Nomor halaman",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Jumlah data per halaman",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "created_at",
+                        "description": "Field sorting (created_at, status)",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "desc",
+                        "description": "Urutan sorting (asc | desc)",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter status prestasi (pending, approved, rejected)",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "List achievements dengan pagination",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -45,7 +81,7 @@
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

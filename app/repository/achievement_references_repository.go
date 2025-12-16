@@ -3,8 +3,9 @@ package repository
 import (
 	"database/sql"
 	"errors"
-	"uas-prestasi/app/model"
+	"strconv"
 	"time"
+	"uas-prestasi/app/model"
 )
 
 type AchievementReferenceRepository struct {
@@ -88,7 +89,6 @@ func (r *AchievementReferenceRepository) GetForVerification(refID string, lectur
 	return &ref, nil
 }
 
-
 func (r *AchievementReferenceRepository) Verify(id, lecturerID string) error {
 	query := `
 		UPDATE achievement_references
@@ -140,109 +140,175 @@ func (r *AchievementReferenceRepository) Reject(id, lecturerID, note string) err
 	return nil
 }
 
-func (r *AchievementReferenceRepository) ListByStudent(studentID string) ([]model.AchievementReference, error) {
-	query := `
-		SELECT id, student_id, mongo_achievement_id, status, submitted_at, verified_at
+// help buat pagination
+func sanitizeSort(sortBy, order string) (string, string) {
+	allowedSort := map[string]bool{
+		"created_at": true,
+		"status":     true,
+	}
+
+	if !allowedSort[sortBy] {
+		sortBy = "created_at"
+	}
+
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+
+	return sortBy, order
+}
+
+func (r *AchievementReferenceRepository) ListByStudent(
+	studentID string,
+	limit, offset int,
+	sortBy, order, status string,
+) ([]model.AchievementReference, int, error) {
+
+	sortBy, order = sanitizeSort(sortBy, order)
+
+	baseQuery := `
 		FROM achievement_references
 		WHERE student_id = $1
-		ORDER BY created_at DESC
 	`
+	args := []interface{}{studentID}
 
-	rows, err := r.DB.Query(query, studentID)
+	if status != "" {
+		baseQuery += " AND status = $2"
+		args = append(args, status)
+	}
+
+	// count
+	countQuery := "SELECT COUNT(*) " + baseQuery
+	var total int
+	if err := r.DB.QueryRow(countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// data
+	dataQuery := `
+		SELECT id, student_id, status, mongo_achievement_id
+	` + baseQuery + `
+		ORDER BY ` + sortBy + ` ` + order + `
+		LIMIT $` + strconv.Itoa(len(args)+1) + `
+		OFFSET $` + strconv.Itoa(len(args)+2)
+
+	args = append(args, limit, offset)
+
+	rows, err := r.DB.Query(dataQuery, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
-	var result []model.AchievementReference
-
+	var results []model.AchievementReference
 	for rows.Next() {
 		var ref model.AchievementReference
-		err := rows.Scan(
-			&ref.ID,
-			&ref.StudentID,
-			&ref.MongoAchievementID,
-			&ref.Status,
-			&ref.SubmittedAt,
-			&ref.VerifiedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, ref)
+		rows.Scan(&ref.ID, &ref.StudentID, &ref.Status, &ref.MongoAchievementID)
+		results = append(results, ref)
 	}
 
-	return result, nil
+	return results, total, nil
 }
 
-func (r *AchievementReferenceRepository) ListByLecturer(lecturerID string) ([]model.AchievementReference, error) {
-	query := `
-		SELECT ar.id, ar.student_id, ar.mongo_achievement_id, ar.status, ar.submitted_at, ar.verified_at
+func (r *AchievementReferenceRepository) ListByLecturer(
+	lecturerUserID string,
+	limit, offset int,
+	sortBy, order, status string,
+) ([]model.AchievementReference, int, error) {
+
+	sortBy, order = sanitizeSort(sortBy, order)
+
+	baseQuery := `
 		FROM achievement_references ar
 		JOIN students s ON s.id = ar.student_id
-		WHERE s.advisor_id = $1
-		ORDER BY ar.created_at DESC
+		WHERE s.advisor_user_id = $1
 	`
+	args := []interface{}{lecturerUserID}
 
-	rows, err := r.DB.Query(query, lecturerID)
+	if status != "" {
+		baseQuery += " AND ar.status = $2"
+		args = append(args, status)
+	}
+
+	// count
+	countQuery := "SELECT COUNT(*) " + baseQuery
+	var total int
+	if err := r.DB.QueryRow(countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// data
+	dataQuery := `
+		SELECT ar.id, ar.student_id, ar.status, ar.mongo_achievement_id
+	` + baseQuery + `
+		ORDER BY ` + sortBy + ` ` + order + `
+		LIMIT $` + strconv.Itoa(len(args)+1) + `
+		OFFSET $` + strconv.Itoa(len(args)+2)
+
+	args = append(args, limit, offset)
+
+	rows, err := r.DB.Query(dataQuery, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
-	var result []model.AchievementReference
-
+	var results []model.AchievementReference
 	for rows.Next() {
 		var ref model.AchievementReference
-		err := rows.Scan(
-			&ref.ID,
-			&ref.StudentID,
-			&ref.MongoAchievementID,
-			&ref.Status,
-			&ref.SubmittedAt,
-			&ref.VerifiedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, ref)
+		rows.Scan(&ref.ID, &ref.StudentID, &ref.Status, &ref.MongoAchievementID)
+		results = append(results, ref)
 	}
 
-	return result, nil
+	return results, total, nil
 }
 
-func (r *AchievementReferenceRepository) ListAll() ([]model.AchievementReference, error) {
-	query := `
-		SELECT id, student_id, mongo_achievement_id, status, submitted_at, verified_at
-		FROM achievement_references
-		ORDER BY created_at DESC
-	`
+func (r *AchievementReferenceRepository) ListAll(limit, offset int, sortBy, order, status string) ([]model.AchievementReference, int, error) {
 
-	rows, err := r.DB.Query(query)
+	sortBy, order = sanitizeSort(sortBy, order)
+
+	baseQuery := `
+		FROM achievement_references
+	`
+	where := ""
+	args := []interface{}{}
+
+	if status != "" {
+		where = " WHERE status = $1"
+		args = append(args, status)
+	}
+
+	// ===== Count =====
+	countQuery := "SELECT COUNT(*) " + baseQuery + where
+	var total int
+	if err := r.DB.QueryRow(countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// ===== Data =====
+	dataQuery := `
+		SELECT id, student_id, status, mongo_achievement_id
+	` + baseQuery + where + `
+		ORDER BY ` + sortBy + ` ` + order + `
+		LIMIT $` + strconv.Itoa(len(args)+1) + `
+		OFFSET $` + strconv.Itoa(len(args)+2)
+
+	args = append(args, limit, offset)
+
+	rows, err := r.DB.Query(dataQuery, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
-	var result []model.AchievementReference
-
+	var results []model.AchievementReference
 	for rows.Next() {
 		var ref model.AchievementReference
-		err := rows.Scan(
-			&ref.ID,
-			&ref.StudentID,
-			&ref.MongoAchievementID,
-			&ref.Status,
-			&ref.SubmittedAt,
-			&ref.VerifiedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, ref)
+		rows.Scan(&ref.ID, &ref.StudentID, &ref.Status, &ref.MongoAchievementID)
+		results = append(results, ref)
 	}
 
-	return result, nil
+	return results, total, nil
 }
 
 // detail achievement
@@ -314,8 +380,6 @@ func (r *AchievementReferenceRepository) DeleteDraft(id, studentID string) error
 	return nil
 }
 
-
-
 func (r *AchievementReferenceRepository) GetStudentIDByUser(userID string) (string, error) {
 	var studentID string
 
@@ -329,7 +393,6 @@ func (r *AchievementReferenceRepository) GetStudentIDByUser(userID string) (stri
 
 	return studentID, nil
 }
-
 
 func (r *AchievementReferenceRepository) IsAdvisorOf(userID string, studentID string) (bool, error) {
 	query := `
@@ -348,7 +411,6 @@ func (r *AchievementReferenceRepository) IsAdvisorOf(userID string, studentID st
 
 	return count > 0, nil
 }
-
 
 func (r *AchievementReferenceRepository) GetHistory(id string) ([]map[string]interface{}, error) {
 	query := `
@@ -416,24 +478,26 @@ func (r *StudentRepository) GetAchievements(studentID string) ([]map[string]inte
 		WHERE student_id=$1
 	`, studentID)
 
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 
 	var result []map[string]interface{}
 	for rows.Next() {
-	var id, status string
-	var created time.Time
+		var id, status string
+		var created time.Time
 
-	if err := rows.Scan(&id, &status, &created); err != nil {
-		return nil, err
+		if err := rows.Scan(&id, &status, &created); err != nil {
+			return nil, err
+		}
+
+		result = append(result, map[string]interface{}{
+			"id":         id,
+			"status":     status,
+			"created_at": created,
+		})
 	}
-
-	result = append(result, map[string]interface{}{
-		"id": id,
-		"status": status,
-		"created_at": created,
-	})
-}
 
 	return result, nil
 }
@@ -460,4 +524,3 @@ func (r *AchievementReferenceRepository) GetOwnedAchievement(id, studentID strin
 
 	return &ref, nil
 }
-
