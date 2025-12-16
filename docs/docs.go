@@ -566,6 +566,15 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Points input",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.VerifyAchievementRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -575,22 +584,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.AchievementStatusResponse"
                         }
                     },
-                    "404": {
-                        "description": "Prestasi tidak ditemukan atau bukan bimbingan dosen",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Gagal memverifikasi prestasi",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/model.ErrorResponse"
                         }
                     }
                 }
@@ -2046,6 +2055,14 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "model.VerifyAchievementRequest": {
+            "type": "object",
+            "properties": {
+                "points": {
+                    "type": "integer"
                 }
             }
         }

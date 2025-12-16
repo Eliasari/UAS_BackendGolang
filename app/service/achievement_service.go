@@ -157,17 +157,36 @@ func (s *AchievementService) Submit(c *fiber.Ctx) error {
 // @Description Dosen wali memverifikasi prestasi mahasiswa
 // @Tags Achievement
 // @Produce json
-// @Param id path string true "Achievement ID"
+// @Param id path string true "Achievement ID" 
+// @Param request body model.VerifyAchievementRequest true "Points input"
 // @Success 200 {object} model.AchievementStatusResponse
-// @Failure 404 {object} map[string]string "Prestasi tidak ditemukan atau bukan bimbingan dosen"
-// @Failure 500 {object} map[string]string "Gagal memverifikasi prestasi"
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Security BearerAuth
 // @Router /api/v1/achievements/{id}/verify [post]
 func (s *AchievementService) Verify(c *fiber.Ctx) error {
 	achievementID := c.Params("id")
 	lecturerID := c.Locals("user_id").(string)
 
-	_, err := s.RefRepo.GetForVerification(achievementID, lecturerID)
+	// Parse request body ke struct type-safe
+	var body model.VerifyAchievementRequest
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Invalid request body",
+		})
+	}
+
+	if body.Points < 0 {
+		return c.Status(400).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Points tidak valid",
+		})
+	}
+
+	// Validasi reference di Postgres
+	ref, err := s.RefRepo.GetForVerification(achievementID, lecturerID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return c.Status(404).JSON(fiber.Map{
@@ -175,27 +194,36 @@ func (s *AchievementService) Verify(c *fiber.Ctx) error {
 				"message": "Prestasi tidak ditemukan atau bukan bimbingan Anda",
 			})
 		}
-
 		return c.Status(500).JSON(fiber.Map{
 			"status":  "error",
 			"message": "Gagal memvalidasi prestasi",
 		})
 	}
 
-	err = s.RefRepo.Verify(achievementID, lecturerID)
-	if err != nil {
+	// Update status di Postgres
+	if err := s.RefRepo.Verify(achievementID, lecturerID); err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"status":  "error",
 			"message": "Gagal memverifikasi prestasi",
 		})
 	}
 
+	// Update points di MongoDB
+	if err := s.MongoRepo.UpdatePoints(ref.MongoAchievementID, body.Points); err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Gagal mengupdate points di MongoDB",
+		})
+	}
+
+	// Return langsung tanpa DTO
 	return c.JSON(fiber.Map{
 		"status":  "success",
 		"message": "Prestasi berhasil diverifikasi",
 		"data": fiber.Map{
 			"id":     achievementID,
 			"status": "verified",
+			"points": body.Points,
 		},
 	})
 }

@@ -15,3 +15,7 @@ type AchievementReference struct {
 	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
+type VerifyAchievementRequest struct {
+    Points int `json:"points"`
+}
+
