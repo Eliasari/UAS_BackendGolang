@@ -66,6 +66,7 @@ Fitur yang tersedia:
 ### 4. Verifikasi Prestasi oleh Dosen Wali
 Dosen wali dapat melakukan proses verifikasi terhadap prestasi mahasiswa bimbingannya, meliputi:
 - Melihat daftar prestasi mahasiswa
+- Memberikan point ketika verifikasi prestasi mahasiswa
 - Menyetujui atau menolak prestasi
 - Memberikan catatan pada prestasi yang ditolak
 
