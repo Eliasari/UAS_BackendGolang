@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 	"uas-prestasi/app/model"
+	"fmt"
+	"strings"
 )
 
 type AchievementReferenceRepository struct {
@@ -264,22 +266,26 @@ func (r *AchievementReferenceRepository) ListByLecturer(
 }
 
 func (r *AchievementReferenceRepository) ListAll(limit, offset int, sortBy, order, status string) ([]model.AchievementReference, int, error) {
-
 	sortBy, order = sanitizeSort(sortBy, order)
 
-	baseQuery := `
-		FROM achievement_references
-	`
-	where := ""
+	baseQuery := `FROM achievement_references`
+	where := []string{}
 	args := []interface{}{}
+	argIndex := 1
 
 	if status != "" {
-		where = " WHERE status = $1"
+		where = append(where, fmt.Sprintf("status = $%d", argIndex))
 		args = append(args, status)
+		argIndex++
+	}
+
+	whereSQL := ""
+	if len(where) > 0 {
+		whereSQL = " WHERE " + strings.Join(where, " AND ")
 	}
 
 	// ===== Count =====
-	countQuery := "SELECT COUNT(*) " + baseQuery + where
+	countQuery := "SELECT COUNT(*) " + baseQuery + whereSQL
 	var total int
 	if err := r.DB.QueryRow(countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, err
@@ -288,10 +294,9 @@ func (r *AchievementReferenceRepository) ListAll(limit, offset int, sortBy, orde
 	// ===== Data =====
 	dataQuery := `
 		SELECT id, student_id, status, mongo_achievement_id
-	` + baseQuery + where + `
-		ORDER BY ` + sortBy + ` ` + order + `
-		LIMIT $` + strconv.Itoa(len(args)+1) + `
-		OFFSET $` + strconv.Itoa(len(args)+2)
+	` + baseQuery + whereSQL + fmt.Sprintf(`
+		ORDER BY %s %s
+		LIMIT $%d OFFSET $%d`, sortBy, order, argIndex, argIndex+1)
 
 	args = append(args, limit, offset)
 
@@ -304,7 +309,9 @@ func (r *AchievementReferenceRepository) ListAll(limit, offset int, sortBy, orde
 	var results []model.AchievementReference
 	for rows.Next() {
 		var ref model.AchievementReference
-		rows.Scan(&ref.ID, &ref.StudentID, &ref.Status, &ref.MongoAchievementID)
+		if err := rows.Scan(&ref.ID, &ref.StudentID, &ref.Status, &ref.MongoAchievementID); err != nil {
+			return nil, 0, err
+		}
 		results = append(results, ref)
 	}
 
